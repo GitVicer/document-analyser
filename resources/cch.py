@@ -66,14 +66,10 @@ class CCH_List(MethodView):
     @blp.arguments(CCHSchema)
     @blp.response(201, CCHSchema)
     def post(self, cch_data):
+        print(cch_data)
         cch = CCHModel(**cch_data)
-        try:
-            db.session.add(cch)
-            db.session.commit()
-        except IntegrityError:
-            abort(400, message = "A cch with that name already exists")
-        except SQLAlchemyError:
-            abort(500, message = "An error occured while entering the data")
+        db.session.add(cch)
+        db.session.commit()
         return cch
      
     def delete(self):
