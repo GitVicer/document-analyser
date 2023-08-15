@@ -2,9 +2,7 @@ from flask import Flask
 from flask_smorest import Api
 from resources.cch import blp as cchblueprint
 from resources.document import blp as documentblueprint
-from resources.auth import blp as authblueprint
 from db import db 
-from resources.auth import oauth
 import psycopg2
 from config import config, database_uri_config
 
@@ -26,14 +24,12 @@ def create_app():
 
     db.init_app(app)
     api = Api(app)
-    oauth.init_app(app)
     
     with app.app_context():
         db.create_all()
 
     api.register_blueprint(cchblueprint)
     api.register_blueprint(documentblueprint)
-    api.register_blueprint(authblueprint)
 
     return app    
 
@@ -41,6 +37,7 @@ def connect():
     try:
         connection = None
         params = config()
+        print('params')
         connection = psycopg2.connect(**params)
 
     # create a cursor

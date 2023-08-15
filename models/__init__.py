@@ -1,3 +1,3 @@
-from models.cch import CCHModel
-from models.document import DocumentModel
+from models.keyword import CCHModel
+from models.documentType import DocumentModel
 

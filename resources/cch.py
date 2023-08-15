@@ -4,7 +4,7 @@ from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 from db import db
 from models import CCHModel
 from schemas import CCHSchema
-from resources.auth import login_required
+#from resources.auth import login_required
 
 
 blp = Blueprint("CCH", "cch")
@@ -59,8 +59,9 @@ class CCH(MethodView):
 class CCH_List(MethodView):
     
     @blp.response(200, CCHSchema(many=True))
-    @login_required
+    #@login_required
     def get(self):
+        print('-------------------------here')
         return CCHModel.query.all()
         
     @blp.arguments(CCHSchema)

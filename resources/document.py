@@ -1,10 +1,12 @@
+from flask import jsonify, request
 from flask.views import MethodView
 from flask_smorest import Blueprint, abort
 from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 from db import db
 from models import DocumentModel
 from schemas import DocumentSchema
-from resources.auth import login_required
+import PyPDF2
+#from resources.auth import login_required
 
 blp = Blueprint("Documents", "documents")
 
@@ -50,7 +52,7 @@ class DocumentList(MethodView):
     
     
     @blp.response(200, DocumentSchema(many=True))
-    @login_required
+    #@login_required
     def get(self):
         return DocumentModel.query.all()
     
@@ -76,6 +78,34 @@ class DocumentList(MethodView):
             db.session.delete(document)
         db.session.commit()
         return {"message": "All documents deleted"}, 200
+    
+@blp.route('/documentUpload')
+class DocumentUpload(MethodView):
+    def post(self):
+        try:
+            # Get the uploaded file from the request
+            uploaded_file = request.files['file']
+            
+            # Check if the file is a PDF
+            if uploaded_file.filename.endswith('.pdf'):
+                pdf_text = extract_text_from_pdf(uploaded_file)
+                return jsonify({'text': pdf_text})
+            else:
+                return jsonify({'error': 'Uploaded file is not a PDF'}), 400
+        except Exception as e:
+            return jsonify({'error': str(e)}), 500
+
+def extract_text_from_pdf(pdf_file):
+    pdf_text = ''
+    reader = PyPDF2.PdfReader(pdf_file)
+    
+    for page_num in range(len(reader.pages)):
+        page = reader.pages[page_num]
+        pdf_text += page.extract_text()
+        
+    return pdf_text
+
+
 
     
     
