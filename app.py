@@ -1,7 +1,8 @@
 from flask import Flask
 from flask_smorest import Api
-from resources.cch import blp as cchblueprint
-from resources.document import blp as documentblueprint
+from resources.documentType import blp as documenttypeblueprint
+from resources.uploadDocument import blp as uploaddocumentblueprint
+from resources.keyword import blp as keywordblueprint
 from db import db 
 import psycopg2
 from config import config, database_uri_config
@@ -28,8 +29,9 @@ def create_app():
     with app.app_context():
         db.create_all()
 
-    api.register_blueprint(cchblueprint)
-    api.register_blueprint(documentblueprint)
+    api.register_blueprint(documenttypeblueprint)
+    api.register_blueprint(uploaddocumentblueprint)
+    api.register_blueprint(keywordblueprint)
 
     return app    
 

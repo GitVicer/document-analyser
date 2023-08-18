@@ -1,3 +1,4 @@
-from models.keyword import CCHModel
-from models.documentType import DocumentModel
+from models.keyword import KeywordModel
+from models.documentType import DocumentTypeModel
+from models.uploadedDocument import UploadedDocumentModel
 
