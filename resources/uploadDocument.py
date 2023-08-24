@@ -106,8 +106,8 @@ class DocumentUpload(MethodView):
         try:
             # Get the uploaded file from the request
             uploaded_file = request.files['file']
-            target_word = request.form['word'].lower()
-            print(target_word)
+            target_keyword = request.form['word'].lower()
+            print(target_keyword)
             
             # Check if the file is a PDF
             if uploaded_file.filename.endswith('.pdf'):
@@ -132,20 +132,81 @@ class DocumentUpload(MethodView):
 
                     substring_positions = []
                     exact_match_positions = []
+                    before_words = []
+                    after_words = []
 
                     for index, word in enumerate(words_list, start=1):
-                        if target_word in word:
-                            substring_positions.append(index)
-                        if word == target_word:
-                            if index not in substring_positions:
+                        if word == target_keyword:
+                                
+                            before_word = words_list[index - 2] if index >= 1 else None
+                            after_word = words_list[index] if index < len(words_list) - 1 else None
+                            before_words.append(before_word)
+                            after_words.append(after_word)
+                            
+                            exact_match_positions.append(index)
+
+                        if target_keyword in word:
+                            if index not in exact_match_positions:
+                                substring_positions.append(index)
+
+                                match = re.search(target_keyword, word)
+                                before_word = word[:match.start()] if word[:match.start()] != '' else (words_list[index - 2] if index >= 1 else None)
+                                after_word = word[match.end():] if word[match.end():] != '' else (words_list[index] if index < len(words_list) - 1 else None)
+                                before_words.append(before_word)
+                                after_words.append(after_word)
+
+                        if substring_positions == [] and exact_match_positions == []:
+                            #for group of strings (don't put less than 3 strings)
+                            keyword_parts = target_keyword.split(' ')
+                            nested_list = [part.split('-') for part in keyword_parts]
+                            target_keyword_list = []
+                            for inner_list in nested_list:
+                                target_keyword_list.extend(inner_list)
+                            target_keyword_initial_word = target_keyword_list[0]
+                            target_keyword_length = len(target_keyword_list)
+
+                            # matching the first, second and third word with respective words of wordlist
+                            if word == target_keyword_initial_word and target_keyword_list[1] == words_list[index] and target_keyword_list[2] == words_list[index+1]:
+                                    
+                                before_word = words_list[index - 2] if index >= 1 else None
+                                after_word = words_list[index + target_keyword_length - 1] if index < len(words_list) - 1 else None
+                                before_words.append(before_word)
+                                after_words.append(after_word)
+                                
+                                exact_match_positions.append(index)
+
+                            # matching the first, second and third word with respective words of wordlist
+                            if target_keyword_initial_word in word and target_keyword_list[1] == words_list[index] and target_keyword_list[2] == words_list[index+1]:
+                                if index not in exact_match_positions:
+                                    substring_positions.append(index)
+
+                                    match = re.search(target_keyword_initial_word, word)
+                                    before_word = word[:match.start()] if word[:match.start()] != '' else (words_list[index - 2] if index >= 1 else None)
+                                    after_word = word[match.end():] if word[match.end():] != '' else (words_list[index + target_keyword_length - 1] if index < len(words_list) - 1 else None)
+                                    before_words.append(before_word)
+                                    after_words.append(after_word)
+
+                        #for keywords like 1303.000
+                        if substring_positions == [] and exact_match_positions == []:
+                            target_keyword_list = target_keyword.split('.')
+                            target_keyword_initial_word = target_keyword_list[0]
+                            target_keyword_length = len(target_keyword_list)
+
+                            if word == target_keyword_initial_word and target_keyword_list[1] == words_list[index]:
+                                before_word = words_list[index - 2] if index >= 1 else None
+                                after_word = words_list[index + target_keyword_length - 1] if index < len(words_list) - 1 else None
+                                before_words.append(before_word)
+                                after_words.append(after_word)
+                                
                                 exact_match_positions.append(index)
 
                     word_positions = substring_positions + exact_match_positions
 
                     # Find position and line number of the target word
-                    character_positions = [match.start() + 1 for match in re.finditer(r'{}'.format(target_word), page_text)]
+                    character_positions = [match.start() + 1 for match in re.finditer(r'{}'.format(target_keyword), page_text)]
 
-                    line_position = [line_number for line_number, line in enumerate(page_text.split('\n'), start=1) if target_word in line]
+                    line_position = [line_number for line_number, line in enumerate(page_text.split('\n'), start=1) if target_keyword in line]
+
 
                     page_statistics.append({
                         'text':page_text,
@@ -153,9 +214,11 @@ class DocumentUpload(MethodView):
                         'word_count': word_count,
                         'line_count': line_count,
                         'character_count': character_count,
-                        'target_word_character_positions': character_positions,
-                        'target_word_line_position': line_position,
-                        'target_word_location':word_positions
+                        'target_keyword_character_positions': character_positions,
+                        'target_keyword_line_position': line_position,
+                        'target_keyword_location':word_positions,
+                        'words_before_keyword': before_words,
+                        'words_after_keyword': after_words
                     })
 
                 return page_statistics
